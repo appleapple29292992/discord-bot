@@ -1,3 +1,4 @@
+import os
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -25,7 +26,7 @@ async def on_ready():
 )
 async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량: int, 메시지: str):
     if 보낼량 < 1 or 보낼량 > 20:
-        await interaction.response.send_message("보낼량은 1\~20 사이로 해줘.", ephemeral=True)
+        await interaction.response.send_message("보낼량은 1~20 사이로 해줘.", ephemeral=True)
         return
 
     await interaction.response.send_message(f"{유저.mention}에게 {보낼량}번 보내는 중...", ephemeral=True)
@@ -40,5 +41,5 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
 
     await interaction.followup.send(f"완료: {success}번 보냄", ephemeral=True)
 
-
+# Render 환경 변수에서 토큰을 안전하게 가져옵니다
 bot.run(os.environ.get("TOKEN"))
