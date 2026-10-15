@@ -1,8 +1,24 @@
 import os
+import threading
+from flask import Flask
 import discord
 from discord.ext import commands
 from discord import app_commands
 
+# Render의 Port Scan을 통과하기 위한 가짜 웹 서버 설정
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is alive!"
+
+def run_web():
+    app.run(host='0.0.0.0', port=10000)
+
+# 백그라운드에서 웹 서버를 실행시킵니다
+threading.Thread(target=run_web).start()
+
+# --- 디스코드 봇 코드 ---
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -41,5 +57,4 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
 
     await interaction.followup.send(f"완료: {success}번 보냄", ephemeral=True)
 
-# Render 환경 변수에서 토큰을 안전하게 가져옵니다
 bot.run(os.environ.get("TOKEN"))
