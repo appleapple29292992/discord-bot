@@ -24,7 +24,7 @@ def get_server_ip():
 
 SERVER_IP = get_server_ip()
 
-# Render의 Port Scan을 통과하기 위한 가짜 웹 서버 설정 (이미지 포함)
+# Render의 Port Scan을 통과하기 위한 가짜 웹 서버 설정 (Justway 이미지 적용)
 app = Flask('')
 
 @app.route('/')
@@ -32,50 +32,14 @@ def home():
     client_ip = request.remote_addr
     print(f"\033[92m[웹 접속] 외부 IP 접속 감지 | 클라이언트 IP: {client_ip} | 서버 IP: {SERVER_IP}\033[0m")
     
-    # 웹사이트 접속 시 보여줄 HTML (이미지 중앙 배치)
-    html_content = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Justway Bot Status</title>
-        <style>
-            body {
-                background-color: #121212;
-                color: #ffffff;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                font-family: Arial, sans-serif;
-            }
-            h0 { color: #4CAF50; margin-bottom: 20px; }
-            img {
-                max-width: 80%;
-                height: auto;
-                border-radius: 10px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            }
-        </style>
-    </head>
-    <body>
-        <h1>🤖 Bot is alive & Running!</h1>
-        <!-- 보내주신 이미지를 링크 형태로 웹에 삽입 -->
-        <img src="https://i.imgur.com/your_image_link.jpg" alt="Justway Bot Image">
-    </body>
-    </html>
-    """
-    # 임시로 대표 이미지 URL을 쓰거나, 이미지를 호스팅하여 주소를 넣으실 수 있습니다.
-    # 만약 직접 코드로 이미지를 띄우기 번거로우시다면 아래와 같이 이미지 주소를 대체할 수 있습니다.
-    
+    # 웹사이트 화면 구성 (Justway 캐릭터 이미지 포함)
     return f"""
-    <div style="text-align: center; background: #111; color: #fff; padding: 50px; font-family: sans-serif;">
-        <h1 style="color: #00ff00;">🤖 Bot is alive! (서버 정상 작동 중)</h1>
-        <p>클라이언트 IP: {client_ip} | 서버 IP: {SERVER_IP}</p>
-        <br>
-        <!-- 보내주신 이미지를 웹 화면에 표시 -->
-        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe" style="max-width: 500px; border-radius: 10px;" alt="Bot Image">
+    <div style="text-align: center; background: #121212; color: #fff; padding: 50px; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <!-- Justway 캐릭터 이미지 -->
+        <img src="https://i.ibb.co/KxphNsgy/1792145243681.jpg" style="max-width: 400px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);" alt="Justway Bot Image">
+        
+        <h1 style="color: #00ff00; margin: 10px 0;">🤖 Bot is alive! (서버 정상 작동 중)</h1>
+        <p style="color: #aaa;">클라이언트 IP: {client_ip} | 서버 IP: {SERVER_IP}</p>
     </div>
     """
 
@@ -149,7 +113,7 @@ async def dm(interaction: discord.Interaction, 유저: discord.User, 보낼량: 
     
     for i in range(보낼량):
         try:
-            await 유저.send(메시지를)
+            await 유저.send(메시지)
             success_count += 1
             await asyncio.sleep(0.3)
         except discord.Forbidden:
