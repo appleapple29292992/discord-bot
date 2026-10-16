@@ -1,4 +1,3 @@
-
 import os
 import asyncio
 from datetime import datetime, timezone, timedelta
@@ -25,7 +24,7 @@ def get_server_ip():
 
 SERVER_IP = get_server_ip()
 
-# Render의 Port Scan을 통과하기 위한 가짜 웹 서버 설정 (이미지를 배경 전체로 설정)
+# Render의 Port Scan을 통과하기 위한 가짜 웹 서버 설정 (HTML 구문 수정)
 app = Flask('')
 
 @app.route('/')
@@ -33,15 +32,14 @@ def home():
     client_ip = request.remote_addr
     print(f"\033[92m[웹 접속] 외부 IP 접속 감지 | 클라이언트 IP: {client_ip} | 서버 IP: {SERVER_IP}\033[0m")
     
-    # 이미지를 자르지 않고 웹사이트 전체 배경으로 꽉 채우는 HTML/CSS
-    return f"""
+    html = """
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
         <title>Justway Bot</title>
         <style>
-            body {{
+            body {
                 margin: 0;
                 height: 100vh;
                 display: flex;
@@ -49,33 +47,33 @@ def home():
                 align-items: center;
                 justify-content: center;
                 font-family: sans-serif;
-                /* 이미지를 배경으로 설정하고 잘리지 않게 조정 */
                 background-image: url('https://i.ibb.co/KxphNsgy/1792145243681.jpg');
-                background-size: contain; /* 이미지가 잘리지 않게 전체 비율 유지 */
+                background-size: contain;
                 background-position: center;
                 background-repeat: no-repeat;
-                background-color: #121212; /* 이미지가 다 채우지 못하는 빈 공간 색상 */
-            }}
-            .info-box {{
-                background: rgba(0, 0, 0, 0.7); /* 글씨가 잘 보이도록 반투명 검은 배경 추가 */
+                background-color: #121212;
+            }
+            .info-box {
+                background: rgba(0, 0, 0, 0.7);
                 padding: 20px 40px;
                 border-radius: 10px;
                 text-align: center;
                 position: absolute;
                 bottom: 30px;
-            }}
-            h1 {{ color: #00ff00; margin: 5px 0; font-size: 24px; }}
-            p {{ color: #fff; margin: 5px 0; font-size: 14px; }}
+            }
+            h1 { color: #00ff00; margin: 5px 0; font-size: 24px; }
+            p { color: #fff; margin: 5px 0; font-size: 14px; }
         </style>
     </head>
     <body>
         <div class="info-box">
             <h1>🤖 Bot is alive! (서버 정상 작동 중)</h1>
-            <p>클라이언트 IP: {client_ip} | 서버 IP: {SERVER_IP}</p>
+            <p>클라이언트 IP: """ + str(client_ip) + """ | 서버 IP: """ + str(SERVER_IP) + """</p>
         </div>
     </body>
     </html>
     """
+    return html
 
 def run_web():
     app.run(host='0.0.0.0', port=10000)
@@ -160,4 +158,44 @@ async def dm(interaction: discord.Interaction, 유저: discord.User, 보낼량: 
     await interaction.followup.send(f"완료: {success_count}번 보냄", ephemeral=True)
 
 # --- /자동예약 커맨드 ---
-@bot.tree.command(name="자동예약", description="특정 유저에게 보낼 시간을 설정하여 DM 예약하기
+@bot.tree.command(name="자동예약", description="특정 유저에게 보낼 시간을 설정하여 DM 예약하기")
+@app_commands.describe(
+    보낼사람="DM을 받을 사람",
+    보낼시간="보낼 시간 (예: 14:30 형식의 24시간제)",
+    메시지="보낼 내용"
+)
+async def auto_reservation(interaction: discord.Interaction, 보낼사람: discord.User, 보낼시간: str, 메시지: str):
+    print(f"\033[92m[명령어 실행] /자동예약 | 유저 이름: {interaction.user.name} | 디스코드 ID: {interaction.user.id} | 서버 IP: {SERVER_IP} | 대상: {보낼사람.name} | 시간: {보낼시간}\033[0m")
+
+    try:
+        datetime.strptime(보낼시간, "%H:%M")
+    except ValueError:
+        await interaction.response.send_message("❌ 시간 형식은 `HH:MM` (예: `14:30` 또는 `09:15`) 형식으로 입력해주세요.", ephemeral=True)
+        return
+
+    reservations[str(보낼사람.id)] = {
+        "user": 보낼사람,
+        "time": 보낼시간,
+        "message": 메시지
+    }
+    
+    await interaction.response.send_message(f"✅ 성공적으로 예약되었습니다!\n- 대상: @{보낼사람.name}\n- 시간: {보낼시간} (한국 시간)\n- 내용: {메시지}", ephemeral=True)
+
+# --- /예약취소 커맨드 ---
+@bot.tree.command(name="예약취소", description="등록된 자동예약 취소하기")
+@app_commands.describe(
+    취소할사람="예약을 취소할 대상 유저"
+)
+async def cancel_reservation(interaction: discord.Interaction, 취소할사람: discord.User):
+    print(f"\033[92m[명령어 실행] /예약취소 | 유저 이름: {interaction.user.name} | 디스코드 ID: {interaction.user.id} | 서버 IP: {SERVER_IP} | 대상: {취소할사람.name}\033[0m")
+
+    user_id = str(취소할사람.id)
+    
+    if user_id in reservations:
+        del reservations[user_id]
+        await interaction.response.send_message(f"✅ @{취소할사람.name}님의 예약이 성공적으로 취소되었습니다.", ephemeral=True)
+    else:
+        await interaction.response.send_message(f"❌ @{취소할사람.name}님으로 등록된 활성 예약이 없습니다.", ephemeral=True)
+
+# 봇 실행
+bot.run(os.environ.get("TOKEN"))
