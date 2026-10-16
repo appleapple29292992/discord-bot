@@ -70,21 +70,21 @@ async def before_check_reservations():
     await bot.wait_until_ready()
 
 
-# --- /dm 커맨드 (Unknown interaction 방지 적용) ---
+# --- /dm 커맨드 (discord.User 사용으로 변환 에러 방지) ---
 @bot.tree.command(name="dm", description="특정 유저에게 DM 보내기 (최대 1000개)")
 @app_commands.describe(
     유저="DM을 받을 사람",
     보낼량="몇 번 보낼지 (최대 1000)",
     메시지="보낼 내용"
 )
-async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량: int, 메시지: str):
+async def dm(interaction: discord.Interaction, 유저: discord.User, 보낼량: int, 메시지: str):
     print(f"[명령어 사용] /dm | 사용자: {interaction.user.name} (ID: {interaction.user.id}) | 대상: {유저.name} | 횟수: {보낼량}")
 
     if 보낼량 < 1 or 보낼량 > 1000:
         await interaction.response.send_message("❌ 보낼량은 1부터 1000 사이의 숫자만 입력 가능합니다.", ephemeral=True)
         return
 
-    # 1. 3초 제한 방지를 위해 먼저 응답 지연(defer) 처리 (ephemeral=True로 본인에게만 보이게 처리)
+    # 3초 제한 방지를 위한 응답 지연 처리
     await interaction.response.defer(ephemeral=True)
     
     success_count = 0
@@ -101,7 +101,6 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
             print(f"기타 에러 발생: {e}")
             break
 
-    # 2. 지연 처리된 응답을 수정하여 완료 메시지 출력
     await interaction.followup.send(f"완료: {success_count}번 보냄", ephemeral=True)
 
 
@@ -112,7 +111,7 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
     보낼시간="보낼 시간 (예: 14:30 형식의 24시간제)",
     메시지="보낼 내용"
 )
-async def auto_reservation(interaction: discord.Interaction, 보낼사람: discord.Member, 보낼시간: str, 메시지: str):
+async def auto_reservation(interaction: discord.Interaction, 보낼사람: discord.User, 보낼시간: str, 메시지: str):
     print(f"[명령어 사용] /자동예약 | 사용자: {interaction.user.name} (ID: {interaction.user.id}) | 대상: {보낼사람.name} | 시간: {보낼시간}")
 
     try:
@@ -135,7 +134,7 @@ async def auto_reservation(interaction: discord.Interaction, 보낼사람: disco
 @app_commands.describe(
     취소할사람="예약을 취소할 대상 유저"
 )
-async def cancel_reservation(interaction: discord.Interaction, 취소할사람: discord.Member):
+async def cancel_reservation(interaction: discord.Interaction, 취소할사람: discord.User):
     print(f"[명령어 사용] /예약취소 | 사용자: {interaction.user.name} (ID: {interaction.user.id}) | 대상: {취소할사람.name}")
 
     user_id = str(취소할사람.id)
@@ -147,4 +146,4 @@ async def cancel_reservation(interaction: discord.Interaction, 취소할사람: 
         await interaction.response.send_message(f"❌ @{취소할사람.name}님으로 등록된 활성 예약이 없습니다.", ephemeral=True)
 
 # 봇 실행 (TOKEN 환경 변수 사용)
-bot.run(os.environ.get("TOKEN"))
+bot.run(os.environ.get("TOKEN"))[span_2](start_span)[span_2](end_span)
