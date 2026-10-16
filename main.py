@@ -141,5 +141,5 @@ async def cancel_reservation(interaction: discord.Interaction, 취소할사람: 
     else:
         await interaction.response.send_message(f"❌ @{취소할사람.name}님으로 등록된 활성 예약이 없습니다.", ephemeral=True)
 
-# 봇 실행 토큰 입력
-bot.run("YOUR_BOT_TOKEN")
+# 봇 실행 (TOKEN 환경 변수 사용)
+bot.run(os.environ.get("TOKEN"))[span_2](start_span)[span_2](end_span)
