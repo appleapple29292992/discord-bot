@@ -49,7 +49,6 @@ async def on_ready():
 # 1분마다 한국 시간 기준 예약 시간을 체크하는 백그라운드 루프
 @tasks.loop(seconds=60)
 async def check_reservations():
-    # 한국시간(KST) 기준 현재 시간 구하기 (예: "14:30")
     now = datetime.now(KST).strftime("%H:%M")
     
     for user_id, data in list(reservations.items()):
@@ -64,7 +63,6 @@ async def check_reservations():
             except Exception as e:
                 print(f"[자동예약 에러] {e}")
             
-            # 1회성 예약 전송 후 목록에서 제거
             del reservations[user_id]
 
 @check_reservations.before_loop
@@ -72,7 +70,7 @@ async def before_check_reservations():
     await bot.wait_until_ready()
 
 
-# --- /dm 커맨드 (최대 1000개 제한) ---
+# --- /dm 커맨드 (Unknown interaction 방지 적용) ---
 @bot.tree.command(name="dm", description="특정 유저에게 DM 보내기 (최대 1000개)")
 @app_commands.describe(
     유저="DM을 받을 사람",
@@ -80,14 +78,14 @@ async def before_check_reservations():
     메시지="보낼 내용"
 )
 async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량: int, 메시지: str):
-    # 명령어를 사용한 사람의 정보 로깅 (아이디와 이름)
     print(f"[명령어 사용] /dm | 사용자: {interaction.user.name} (ID: {interaction.user.id}) | 대상: {유저.name} | 횟수: {보낼량}")
 
     if 보낼량 < 1 or 보낼량 > 1000:
         await interaction.response.send_message("❌ 보낼량은 1부터 1000 사이의 숫자만 입력 가능합니다.", ephemeral=True)
         return
 
-    await interaction.response.send_message(f"@{유저.name}에게 {보낼량}번 보내는 중...", ephemeral=True)
+    # 1. 3초 제한 방지를 위해 먼저 응답 지연(defer) 처리 (ephemeral=True로 본인에게만 보이게 처리)
+    await interaction.response.defer(ephemeral=True)
     
     success_count = 0
     
@@ -95,7 +93,7 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
         try:
             await 유저.send(메시지)
             success_count += 1
-            await asyncio.sleep(0.5) # API Rate Limit 방지용 딜레이
+            await asyncio.sleep(0.3) # API 제한 방지 딜레이
         except discord.Forbidden:
             print(f"DM 전송 실패: {유저.name}님에게 DM을 보낼 수 없습니다.")
             break
@@ -103,7 +101,8 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
             print(f"기타 에러 발생: {e}")
             break
 
-    await interaction.edit_original_response(content=f"완료: {success_count}번 보냄")
+    # 2. 지연 처리된 응답을 수정하여 완료 메시지 출력
+    await interaction.followup.send(f"완료: {success_count}번 보냄", ephemeral=True)
 
 
 # --- /자동예약 커맨드 ---
@@ -114,10 +113,8 @@ async def dm(interaction: discord.Interaction, 유저: discord.Member, 보낼량
     메시지="보낼 내용"
 )
 async def auto_reservation(interaction: discord.Interaction, 보낼사람: discord.Member, 보낼시간: str, 메시지: str):
-    # 명령어를 사용한 사람의 정보 로깅
     print(f"[명령어 사용] /자동예약 | 사용자: {interaction.user.name} (ID: {interaction.user.id}) | 대상: {보낼사람.name} | 시간: {보낼시간}")
 
-    # 시간 형식 간단 검증 (HH:MM)
     try:
         datetime.strptime(보낼시간, "%H:%M")
     except ValueError:
@@ -139,7 +136,6 @@ async def auto_reservation(interaction: discord.Interaction, 보낼사람: disco
     취소할사람="예약을 취소할 대상 유저"
 )
 async def cancel_reservation(interaction: discord.Interaction, 취소할사람: discord.Member):
-    # 명령어를 사용한 사람의 정보 로깅
     print(f"[명령어 사용] /예약취소 | 사용자: {interaction.user.name} (ID: {interaction.user.id}) | 대상: {취소할사람.name}")
 
     user_id = str(취소할사람.id)
@@ -151,4 +147,4 @@ async def cancel_reservation(interaction: discord.Interaction, 취소할사람: 
         await interaction.response.send_message(f"❌ @{취소할사람.name}님으로 등록된 활성 예약이 없습니다.", ephemeral=True)
 
 # 봇 실행 (TOKEN 환경 변수 사용)
-bot.run(os.environ.get("TOKEN"))[span_0](start_span)[span_0](end_span)
+bot.run(os.environ.get("TOKEN"))
